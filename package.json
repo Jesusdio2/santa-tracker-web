@@ -3,13 +3,13 @@
   "version": "2021.1.0",
   "license": "Apache-2.0",
   "scripts": {
-    "dev": "npm run start",
-    "start": "./serve.js",
-    "release": "./release.js",
-    "test": "mocha-headless-server src/api/test.html",
-    "staging-check": "node .cloudbuild/staging-check.js",
-    "postinstall": "ln -s ../node_modules static/node_modules || true"
-  },
+  "dev": "node serve.js",
+  "start": "node serve.js",
+  "release": "node release.js",
+  "test": "mocha-headless-server src/api/test.html",
+  "staging-check": "node .cloudbuild/staging-check.js",
+  "postinstall": "ln -s ../node_modules static/node_modules || true"
+}
   "dependencies": {
     "@babel/core": "^7.6.0",
     "@babel/preset-env": "^7.6.0",
