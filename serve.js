@@ -69,13 +69,9 @@ const yargs = require('yargs')
  * @param {number} port
  * @param {boolean} all
  */
-function listen(server, port, all) {
+function listen(server, port) {
   return new Promise((resolve) => {
-    if (all) {
-      server.listen(port, '0.0.0.0', resolve);
-    } else {
-      server.listen(port, '127.0.0.1', resolve);
-    }
+    server.listen(port, '0.0.0.0', resolve);
   });
 }
 
