@@ -14,14 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// Jesusdio2 adapted the code for use on "Render.com".
 
 const chalk = require('chalk');
 const fs = require('fs').promises;
 const i18n = require('./build/i18n.js');
 const santaVfs = require('./santa-vfs.js');
 const vfsMiddleware = require('./build/modern-vfs-middleware.js');
-
 
 const polka = require('polka');
 const dhost = require('dhost').default;
@@ -30,40 +29,40 @@ const log = require('fancy-log');
 const path = require('path');
 
 const yargs = require('yargs')
-    .strict()
-    .epilogue('https://github.com/google/santa-tracker-web')
-    .option('port', {
-      alias: 'p',
-      type: 'number',
-      default: process.env.PORT || 8000,
-      describe: 'Static port',
-    })
-    .option('all', {
-      alias: 'a',
-      type: 'boolean',
-      default: false,
-      describe: 'Serve static on network address'
-    })
-    .option('prefix', {
-      type: 'string',
-      default: 'st',
-      describe: 'Static prefix',
-      coerce(v) {
-        return v.replace(/[^a-z0-9]/g, '') || 'st';  // ensure prefix is basic ascii only
-      },
-      requiresArg: true,
-    })
-    .option('lang', {
-      type: 'string',
-      default: 'en',
-      describe: 'Serving language',
-    })
-    .option('compile', {
-      type: 'boolean',
-      default: true,
-      describe: 'Compile Closure scenes',
-    })
-    .argv;
+  .strict()
+  .epilogue('https://github.com/google/santa-tracker-web')
+  .option('port', {
+    alias: 'p',
+    type: 'number',
+    default: parseInt(process.env.PORT, 10) || 8000,
+    describe: 'Static port',
+  })
+  .option('all', {
+    alias: 'a',
+    type: 'boolean',
+    default: false,
+    describe: 'Serve static on network address'
+  })
+  .option('prefix', {
+    type: 'string',
+    default: 'st',
+    describe: 'Static prefix',
+    coerce(v) {
+      return v.replace(/[^a-z0-9]/g, '') || 'st';  // ensure prefix is basic ascii only
+    },
+    requiresArg: true,
+  })
+  .option('lang', {
+    type: 'string',
+    default: 'en',
+    describe: 'Serving language',
+  })
+  .option('compile', {
+    type: 'boolean',
+    default: true,
+    describe: 'Compile Closure scenes',
+  })
+  .argv;
 
 /**
  * @param {polka.Polka} server
@@ -71,7 +70,6 @@ const yargs = require('yargs')
  * @param {boolean} all
  */
 function listen(server, port, all) {
-  // Always listen on IPv4 in dev.
   return new Promise((resolve) => {
     if (all) {
       server.listen(port, '0.0.0.0', resolve);
@@ -94,9 +92,7 @@ function clipboardCopy(v) {
 const messages = i18n(yargs.lang);
 log(chalk.red(messages('santatracker')), `[${yargs.lang}]`);
 
-
-// nb. matches config in release.js
-const baseurl = `http://127.0.0.1:${yargs.port + 80}/`;
+const baseurl = `http://127.0.0.1:${yargs.port}/`;
 const config = {
   staticScope: `${baseurl}${yargs.prefix}/`,
   version: `dev-${(new Date).toISOString().replace(/[^\d]/g, '')}`,
@@ -118,17 +114,15 @@ async function serve() {
   const staticServer = polka();
   staticServer.use(yargs.prefix, vfsMiddleware(vfs, 'static'), staticHost);
 
-  await listen(staticServer, yargs.port + 80, yargs.all);
+  await listen(staticServer, yargs.port, yargs.all);
   log('Static', chalk.green(config.staticScope), yargs.all ? chalk.red('(on all interfaces)') : '');
 
   const prodServer = polka();
 
   const prodHtmlMiddleware = async (req, res, next) => {
-    // Match Google's serving infrastructure, and serve valid files under /intl/XX/.
     const languageMatch = /^\/intl\/([-_\w]+)(\/|$)/.exec(req.path);
     if (languageMatch) {
       if (!languageMatch[2]) {
-        // fix "/intl/xx" => "/intl/xx/"
         res.writeHead(301, {'Location': req.path + '/'});
         return res.end();
       }
@@ -141,15 +135,14 @@ async function serve() {
       const cand = `${simplePathMatch[1]}.html`;
       try {
         await fs.stat(path.join('prod', cand));
-        servePath = cand;  // real file, serve instead of faux-"index.html"
+        servePath = cand;
       } catch (e) {
-        // ignore, not a real file
+        // ignore
       }
     } else if (req.path !== '/') {
       return next();
     }
 
-    // Serve the raw HTML.
     const filename = path.join('prod', servePath);
     const content = await fs.readFile(filename, 'utf-8');
 
@@ -163,7 +156,6 @@ async function serve() {
     dhost({path: 'prod', listing: false}),
   );
 
-  // Listen, copy and announce prod URL.
   await listen(prodServer, yargs.port);
   const prodURL = `http://localhost:${yargs.port}`;
   const clipboardError = clipboardCopy(prodURL);
