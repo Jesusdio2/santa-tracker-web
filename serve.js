@@ -114,7 +114,7 @@ async function serve() {
   const staticServer = polka();
   staticServer.use(yargs.prefix, vfsMiddleware(vfs, 'static'), staticHost);
 
-  await listen(staticServer, yargs.port, yargs.all);
+  // aawait listen(staticServer, yargs.port, yargs.all);
   log('Static', chalk.green(config.staticScope), yargs.all ? chalk.red('(on all interfaces)') : '');
 
   const prodServer = polka();
