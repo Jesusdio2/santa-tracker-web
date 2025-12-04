@@ -69,6 +69,29 @@ const yargs = require('yargs')
  * @param {number} port
  * @param {boolean} all
  */
+
+// Forzar la fecha a 24 de diciembre cada vez que arranca el servidor
+const FIXED_DATE = new Date('2025-12-24T00:00:00Z');
+const OriginalDate = Date;
+
+global.Date = class extends OriginalDate {
+  constructor(...args) {
+    if (args.length === 0) {
+      return FIXED_DATE;
+    }
+    return new OriginalDate(...args);
+  }
+  static now() {
+    return FIXED_DATE.getTime();
+  }
+  static parse(str) {
+    return OriginalDate.parse(str);
+  }
+  static UTC(...args) {
+    return OriginalDate.UTC(...args);
+  }
+};
+
 function listen(server, port) {
   return new Promise((resolve) => {
     server.listen(port, '0.0.0.0', resolve);
